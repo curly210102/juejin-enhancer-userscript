@@ -1724,53 +1724,56 @@
 	  const duration = 30 * 60 * 1000;
 	  const allExtensions = listAllExtension();
 	  const lastCheckTime = GM_getValue("update_check", 0);
-	  new Date().valueOf() - lastCheckTime > duration; // if (allExtensions.length > 0 && isTimeToCheck) {
+	  const isTimeToCheck = new Date().valueOf() - lastCheckTime > duration;
 
-	  GM_setValue("update_check", new Date().valueOf());
-	  GM_xmlhttpRequest({
-	    method: "POST",
-	    url: `${marketplaceURL}/api/check`,
-	    headers: {
-	      "content-type": "application/json"
-	    },
-	    data: JSON.stringify({
-	      slugs: allExtensions
-	    }),
-	    responseType: "json",
+	  if (allExtensions.length > 0 && isTimeToCheck) {
+	    GM_setValue("update_check", new Date().valueOf());
+	    GM_xmlhttpRequest({
+	      method: "POST",
+	      url: `${marketplaceURL}/api/check`,
+	      headers: {
+	        "content-type": "application/json"
+	      },
+	      data: JSON.stringify({
+	        slugs: allExtensions
+	      }),
+	      responseType: "json",
 
-	    onload({
-	      status,
-	      response
-	    }) {
-	      if (status === 200) {
-	        response.updated.forEach(({
-	          slug,
-	          rawURL,
-	          version
-	        }) => {
-	          const localExt = queryExtension(slug);
+	      onload({
+	        status,
+	        response
+	      }) {
+	        if (status === 200) {
+	          response.updated.forEach(({
+	            slug,
+	            rawURL,
+	            version
+	          }) => {
+	            const localExt = queryExtension(slug);
 
-	          if ((localExt === null || localExt === void 0 ? void 0 : localExt.version) !== version || localExt.url !== rawURL) {
-	            fetchPlugin(rawURL).then(code => {
-	              saveToStorage(slug, {
-	                slug,
-	                version,
-	                code,
-	                url: rawURL
+	            if ((localExt === null || localExt === void 0 ? void 0 : localExt.version) !== version || localExt.url !== rawURL) {
+	              fetchPlugin(rawURL).then(code => {
+	                saveToStorage(slug, {
+	                  slug,
+	                  version,
+	                  code,
+	                  url: rawURL
+	                });
 	              });
-	            });
-	          }
-	        });
-	        response.deleted.forEach(slug => {
-	          removeFromStorage(slug);
-	        });
+	            }
+	          });
+	          response.deleted.forEach(slug => {
+	            removeFromStorage(slug);
+	          });
+	        }
 	      }
-	    }
 
-	  }); // }
-	  // setTimeout(() => {
-	  //   autoCheckExtension();
-	  // }, duration);
+	    });
+	  }
+
+	  setTimeout(() => {
+	    autoCheckExtension();
+	  }, duration);
 	}
 
 	initMenu();

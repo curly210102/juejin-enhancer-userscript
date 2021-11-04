@@ -1,4 +1,7 @@
-const storageKey = "added_juejin_extension_";
+const extStoragePrefix = "added_juejin_extension_";
+// const marketplaceURL = "http://localhost:3000";
+const marketplaceURL = "https://juejin-enhancer-extensions.vercel.app";
+
 type IExtension = {
   slug: string;
   version: string;
@@ -18,89 +21,111 @@ const isIExtension = (object: any): object is IExtension => {
 
 function initMenu() {
   GM_registerMenuCommand("扩展市场", () => {
-    GM_openInTab("https://juejin-enhancer-extensions.vercel.app/", {
+    GM_openInTab(marketplaceURL, {
       active: true,
     });
   });
 }
 
-initMenu();
-if (location.host === "juejin.cn") {
-  launchJuejin();
-} else {
-  launchMarketplace();
-}
+const saveToStorage = (
+  name: string,
+  extension: IExtension,
+  isLocal?: boolean
+) => {
+  GM_setValue(
+    extStoragePrefix + `${isLocal ? "local_" : ""}` + name,
+    extension
+  );
+};
+
+const removeFromStorage = (name: string) => {
+  GM_deleteValue(extStoragePrefix + name);
+};
+
+const removeAllLocalExtensions = () => {
+  try {
+    const allLocalExtension = GM_listValues().filter((key) =>
+      key.startsWith(extStoragePrefix + "local_")
+    );
+    allLocalExtension.forEach(GM_deleteValue);
+    return "success";
+  } catch (e) {
+    return "error";
+  }
+};
+
+const queryExtension = (name: string) => {
+  return (
+    GM_getValue(extStoragePrefix + name) ||
+    GM_getValue(extStoragePrefix + "local_" + name)
+  );
+};
+
+const listAllExtension = () => {
+  return GM_listValues()
+    .filter(
+      (key) =>
+        key.startsWith(extStoragePrefix) &&
+        !key.startsWith(extStoragePrefix + "local_")
+    )
+    .map((key) => key.replace(new RegExp("^" + extStoragePrefix), ""));
+};
+
+const cleanDataCaches = () => {
+  GM_listValues()
+    .filter((key) => !key.startsWith(extStoragePrefix))
+    .forEach((key) => GM_deleteValue(key));
+};
+
+const fetchPlugin = (url: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    GM_xmlhttpRequest({
+      method: "GET",
+      url,
+      onload({ status, response }) {
+        if (status === 200) {
+          try {
+            resolve(response);
+          } catch (error) {
+            reject(error);
+          }
+        } else {
+          reject("error");
+        }
+      },
+      onerror(e) {
+        reject("request_error");
+      },
+      onabort() {
+        reject("aborted");
+      },
+    });
+  });
+};
 
 function launchMarketplace() {
-  const saveToStorage = (
-    name: string,
-    extension: IExtension,
-    isLocal?: boolean
-  ) => {
-    GM_setValue(storageKey + `${isLocal ? "local_" : ""}` + name, extension);
-  };
-
-  const removeFromStorage = (name: string) => {
-    GM_deleteValue(storageKey + name);
-  };
-
-  const removeAllLocalExtensions = () => {
+  unsafeWindow.onAddLocalJuejinExtension = (filePath, code) => {
     try {
-      const allLocalExtension = GM_listValues().filter((key) =>
-        key.startsWith(storageKey + "local_")
-      );
-      allLocalExtension.forEach(GM_deleteValue);
+      const extension = {
+        slug: filePath,
+        version: "0.0.0",
+        code,
+        url: filePath,
+      };
+      saveToStorage(filePath, extension, true);
       return "success";
     } catch (e) {
       return "error";
     }
   };
 
-  const haveExtension = (name: string) => {
-    return (
-      GM_getValue(storageKey + name) ||
-      GM_getValue(storageKey + "local_" + name)
-    );
-  };
-
-  const fetchPlugin = (url: string): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      GM_xmlhttpRequest({
-        method: "GET",
-        url,
-        onload({ status, response }) {
-          if (status === 200) {
-            try {
-              resolve(response);
-            } catch (error) {
-              reject(error);
-            }
-          } else {
-            reject("error");
-          }
-        },
-        onerror(e) {
-          reject("request_error");
-        },
-        onabort() {
-          reject("aborted");
-        },
-      });
-    });
-  };
-
-  unsafeWindow.onAddLocalJuejinExtension = (filePath, code) => {
-    const extension = {
-      slug: filePath,
-      version: "0.0.0",
-      code,
-      url: filePath,
-    };
-    saveToStorage(filePath, extension, true);
-  };
-
   unsafeWindow.onRemoveLocalJuejinExtension = () => {
-    removeAllLocalExtensions();
+    try {
+      removeAllLocalExtensions();
+      return "success";
+    } catch (e) {
+      return "error";
+    }
   };
 
   unsafeWindow.onAddJuejinExtension = (slug, { url, version }) => {
@@ -126,12 +151,33 @@ function launchMarketplace() {
     });
   };
 
-  unsafeWindow.checkJuejinExtensionIsAdded = (slug) => {
-    return Boolean(haveExtension(slug));
+  unsafeWindow.checkJuejinExtension = (slug, version) => {
+    const extension = queryExtension(slug) as IExtension;
+    if (!extension) {
+      return {
+        added: false,
+        update: false,
+      };
+    } else {
+      return {
+        added: true,
+        update: version !== extension.version,
+      };
+    }
+  };
+
+  unsafeWindow.cleanExtensionDataCaches = () => {
+    try {
+      cleanDataCaches();
+      return "success";
+    } catch (e) {
+      return "error";
+    }
   };
 }
 
 function launchJuejin() {
+  console.log($);
   const plugins = restoreFromStorage();
   plugins.forEach(({ plugin }) => {
     plugin?.onLoaded?.();
@@ -140,7 +186,7 @@ function launchJuejin() {
 
   function restoreFromStorage() {
     const allStoragePlugins = GM_listValues().filter((key) =>
-      key.startsWith(storageKey)
+      key.startsWith(extStoragePrefix)
     );
 
     return allStoragePlugins
@@ -189,4 +235,68 @@ function launchJuejin() {
       onRouteChange();
     });
   }
+}
+
+function autoCheckExtension() {
+  const duration = 30 * 60 * 1000;
+  const allExtensions = listAllExtension();
+  const lastCheckTime = GM_getValue("update_check", 0);
+  const isTimeToCheck = new Date().valueOf() - lastCheckTime > duration;
+
+  if (allExtensions.length > 0 && isTimeToCheck) {
+    GM_setValue("update_check", new Date().valueOf());
+    GM_xmlhttpRequest({
+      method: "POST",
+      url: `${marketplaceURL}/api/check`,
+      headers: {
+        "content-type": "application/json",
+      },
+      data: JSON.stringify({
+        slugs: allExtensions,
+      }),
+      responseType: "json",
+      onload({ status, response }) {
+        if (status === 200) {
+          response.updated.forEach(
+            ({
+              slug,
+              rawURL,
+              version,
+            }: {
+              slug: string;
+              rawURL: string;
+              version: string;
+            }) => {
+              const localExt = queryExtension(slug) as IExtension;
+              if (localExt?.version !== version || localExt.url !== rawURL) {
+                fetchPlugin(rawURL).then((code) => {
+                  saveToStorage(slug, {
+                    slug,
+                    version,
+                    code,
+                    url: rawURL,
+                  });
+                });
+              }
+            }
+          );
+          response.deleted.forEach((slug: string) => {
+            removeFromStorage(slug);
+          });
+        }
+      },
+    });
+  }
+
+  setTimeout(() => {
+    autoCheckExtension();
+  }, duration);
+}
+
+initMenu();
+autoCheckExtension();
+if (location.host === "juejin.cn") {
+  launchJuejin();
+} else if (location.origin === marketplaceURL) {
+  launchMarketplace();
 }

@@ -3,8 +3,7 @@
   "@name:zh-CN": "掘金助手",
   "@description": "Enhances Juejin",
   "@description:zh-CN": "掘金功能增强，提供进度追踪、数据统计、操作辅助等功能。",
-  "@match": "https://juejin.cn/*",
-  "@match": "https://juejin-enhancer-extensions.vercel.app/*",
+  "@match": "*",
   "@run-at": "document-end",
   "@require": "tampermonkey://vendor/jquery.js",
   "@grant": [
@@ -30,5 +29,10 @@
     "GM_notification",
     "GM_setClipboard"
   ],
-  "@connect": ["juejin.cn", "github.com", "gitee.com"]
+  "@connect": [
+    "juejin.cn",
+    "github.com",
+    "gitee.com",
+    "juejin-enhancer-extensions.vercel.app"
+  ]
 }

@@ -7,7 +7,7 @@
 // @include              *
 // @name:zh-CN           掘金助手
 // @description:zh-CN    掘金功能增强，提供进度追踪、数据统计、操作辅助等功能。
-// @match                https://localhost:3000/*
+// @match                https://juejin-enhancer-extensions.vercel.app/*
 // @run-at               document-end
 // @require              tampermonkey://vendor/jquery.js
 // @grant                GM_addStyle
@@ -46,7 +46,7 @@
 
   function initMenu() {
     GM_registerMenuCommand("扩展市场", () => {
-      GM_openInTab("http://localhost:3000", {
+      GM_openInTab("https://juejin-enhancer-extensions.vercel.app/", {
         active: true
       });
     });

@@ -18,7 +18,7 @@ const isIExtension = (object: any): object is IExtension => {
 
 function initMenu() {
   GM_registerMenuCommand("扩展市场", () => {
-    GM_openInTab("http://localhost:3000", {
+    GM_openInTab("https://juejin-enhancer-extensions.vercel.app/", {
       active: true,
     });
   });

@@ -1573,6 +1573,30 @@
 	  });
 	}
 
+	const plugins = restoreFromStorage();
+
+	function restoreFromStorage() {
+	  const allStoragePlugins = GM_listValues().filter(key => key.startsWith(extStoragePrefix));
+	  return allStoragePlugins.map(key => GM_getValue(key, null)).filter(isIExtension).map(({
+	    slug,
+	    code
+	  }) => {
+	    return executePlugin(slug, code);
+	  }).filter(({
+	    plugin
+	  }) => {
+	    return plugin && !plugin.isOffShelf;
+	  });
+	}
+
+	function executePlugin(name, code) {
+	  const plugin = eval(code);
+	  return {
+	    name,
+	    plugin
+	  };
+	}
+
 	function launchMarketplace() {
 	  unsafeWindow.onAddLocalJuejinExtension = (filePath, code) => {
 	    try {
@@ -1646,7 +1670,6 @@
 
 	function launchJuejin() {
 	  console.log($);
-	  const plugins = restoreFromStorage();
 	  plugins.forEach(({
 	    plugin
 	  }) => {
@@ -1655,28 +1678,6 @@
 	    plugin === null || plugin === void 0 ? void 0 : (_plugin$onLoaded = plugin.onLoaded) === null || _plugin$onLoaded === void 0 ? void 0 : _plugin$onLoaded.call(plugin);
 	  });
 	  initRouter();
-
-	  function restoreFromStorage() {
-	    const allStoragePlugins = GM_listValues().filter(key => key.startsWith(extStoragePrefix));
-	    return allStoragePlugins.map(key => GM_getValue(key, null)).filter(isIExtension).map(({
-	      slug,
-	      code
-	    }) => {
-	      return executePlugin(slug, code);
-	    }).filter(({
-	      plugin
-	    }) => {
-	      return plugin && !plugin.isOffShelf;
-	    });
-	  }
-
-	  function executePlugin(name, code) {
-	    const plugin = eval(code);
-	    return {
-	      name,
-	      plugin
-	    };
-	  }
 
 	  function initRouter() {
 	    let currentRouterPathname = "";

@@ -106,6 +106,32 @@ function installExtension(slug: string, url: string, version: string) {
   });
 }
 
+const plugins = restoreFromStorage();
+
+function restoreFromStorage() {
+  const allStoragePlugins = GM_listValues().filter((key) =>
+    key.startsWith(extStoragePrefix)
+  );
+
+  return allStoragePlugins
+    .map((key) => GM_getValue<IExtension | null>(key, null))
+    .filter(isIExtension)
+    .map(({ slug, code }) => {
+      return executePlugin(slug, code);
+    })
+    .filter(({ plugin }) => {
+      return plugin && !plugin.isOffShelf;
+    });
+}
+
+function executePlugin(name: string, code: string) {
+  const plugin = eval(code);
+  return {
+    name,
+    plugin,
+  };
+}
+
 function launchMarketplace() {
   unsafeWindow.onAddLocalJuejinExtension = (filePath, code) => {
     try {
@@ -175,35 +201,10 @@ function launchMarketplace() {
 
 function launchJuejin() {
   console.log($);
-  const plugins = restoreFromStorage();
   plugins.forEach(({ plugin }) => {
     plugin?.onLoaded?.();
   });
   initRouter();
-
-  function restoreFromStorage() {
-    const allStoragePlugins = GM_listValues().filter((key) =>
-      key.startsWith(extStoragePrefix)
-    );
-
-    return allStoragePlugins
-      .map((key) => GM_getValue<IExtension | null>(key, null))
-      .filter(isIExtension)
-      .map(({ slug, code }) => {
-        return executePlugin(slug, code);
-      })
-      .filter(({ plugin }) => {
-        return plugin && !plugin.isOffShelf;
-      });
-  }
-
-  function executePlugin(name: string, code: string) {
-    const plugin = eval(code);
-    return {
-      name,
-      plugin,
-    };
-  }
 
   function initRouter() {
     let currentRouterPathname = "";

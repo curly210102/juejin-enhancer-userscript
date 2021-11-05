@@ -9,11 +9,11 @@
 1. 安装脚本
 
 2. 访问扩展市场
-   ![](./resources/marketplace-entry.png)
+   ![](https://gitee.com/curlly-brackets/pic-bed/raw/master/marketplace-entry.png)
 
 3. 添加需要的扩展
 
-![](./resources/marketplace.png)
+![](https://gitee.com/curlly-brackets/pic-bed/raw/master/marketplace.png)
 
 4. 刷新掘金页面
 

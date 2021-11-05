@@ -1,12 +1,12 @@
 
 // ==UserScript==
-// @name                 Juejin Enhancer
+// @name                 Juejin Extension Enhancer
 // @namespace            juejin-enhancer
 // @version              0.1.8
 // @description          Enhances Juejin
 // @include              *
-// @name:zh-CN           掘金助手
-// @description:zh-CN    掘金功能增强，提供进度追踪、数据统计、操作辅助等功能。
+// @name:zh-CN           掘金扩展助手
+// @description:zh-CN    提供一个扩展平台，聚合掘金社区的各类第三方扩展，可插拔使用。扩展旨在为掘金社区提供辅助支持。
 // @match                *
 // @run-at               document-end
 // @require              tampermonkey://vendor/jquery.js

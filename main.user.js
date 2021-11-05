@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name                 Juejin Extension Enhancer
 // @namespace            juejin-enhancer
-// @version              1.0.0
+// @version              1.0.1
 // @description          Enhances Juejin
 // @include              *
 // @name:zh-CN           掘金扩展助手

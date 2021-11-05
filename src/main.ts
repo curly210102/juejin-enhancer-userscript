@@ -19,14 +19,6 @@ const isIExtension = (object: any): object is IExtension => {
   );
 };
 
-function initMenu() {
-  GM_registerMenuCommand("扩展市场", () => {
-    GM_openInTab(marketplaceURL, {
-      active: true,
-    });
-  });
-}
-
 const saveToStorage = (
   name: string,
   extension: IExtension,
@@ -103,6 +95,17 @@ const fetchPlugin = (url: string): Promise<string> => {
   });
 };
 
+function installExtension(slug: string, url: string, version: string) {
+  return fetchPlugin(url).then((code) => {
+    saveToStorage(slug, {
+      slug,
+      version,
+      code,
+      url,
+    });
+  });
+}
+
 function launchMarketplace() {
   unsafeWindow.onAddLocalJuejinExtension = (filePath, code) => {
     try {
@@ -129,13 +132,7 @@ function launchMarketplace() {
   };
 
   unsafeWindow.onAddJuejinExtension = (slug, { url, version }) => {
-    return fetchPlugin(url).then((code) => {
-      saveToStorage(slug, {
-        slug,
-        version,
-        code,
-        url,
-      });
+    return installExtension(slug, url, version).then(() => {
       return "success";
     });
   };
@@ -237,6 +234,14 @@ function launchJuejin() {
   }
 }
 
+function initMenu() {
+  GM_registerMenuCommand("扩展市场", () => {
+    GM_openInTab(marketplaceURL, {
+      active: true,
+    });
+  });
+}
+
 function autoCheckExtension() {
   const duration = 30 * 60 * 1000;
   const allExtensions = listAllExtension();
@@ -269,14 +274,7 @@ function autoCheckExtension() {
             }) => {
               const localExt = queryExtension(slug) as IExtension;
               if (localExt?.version !== version || localExt.url !== rawURL) {
-                fetchPlugin(rawURL).then((code) => {
-                  saveToStorage(slug, {
-                    slug,
-                    version,
-                    code,
-                    url: rawURL,
-                  });
-                });
+                installExtension(slug, rawURL, version);
               }
             }
           );
@@ -293,10 +291,24 @@ function autoCheckExtension() {
   }, duration);
 }
 
-initMenu();
-autoCheckExtension();
-if (location.host === "juejin.cn") {
-  launchJuejin();
-} else if (location.origin === marketplaceURL) {
-  launchMarketplace();
+async function preInstallExtension() {
+  if (!GM_getValue("activated", false)) {
+    await installExtension(
+      "juejin-post-tracker",
+      "https://gitee.com/curlly-brackets/juejin-post-tracker/raw/main/main.user.js",
+      "0.0.1"
+    );
+    GM_setValue("activated", true);
+  }
 }
+
+(async function start() {
+  initMenu();
+  await preInstallExtension();
+  autoCheckExtension();
+  if (location.host === "juejin.cn") {
+    launchJuejin();
+  } else if (location.origin === marketplaceURL) {
+    launchMarketplace();
+  }
+})();

@@ -46,6 +46,18 @@ const removeAllLocalExtensions = () => {
   }
 };
 
+const removeAllExtensions = () => {
+  try {
+    const allExtension = GM_listValues().filter((key) =>
+      key.startsWith(extStoragePrefix)
+    );
+    allExtension.forEach(GM_deleteValue);
+    return "success";
+  } catch (e) {
+    return "error";
+  }
+};
+
 const queryExtension = (name: string) => {
   return (
     GM_getValue(extStoragePrefix + name) ||
@@ -240,6 +252,22 @@ function initMenu() {
     GM_openInTab(marketplaceURL, {
       active: true,
     });
+  });
+  GM_registerMenuCommand("手动添加扩展", () => {
+    const url = window.prompt("输入可访问链接");
+
+    if (url) {
+      installExtension(url, url, "0.0.0")
+        .then(() => {
+          window.alert("添加成功");
+        })
+        .catch(() => {
+          window.alert("添加失败");
+        });
+    }
+  });
+  GM_registerMenuCommand("移除所有扩展", () => {
+    removeAllExtensions();
   });
 }
 

@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name                 Juejin Extension Enhancer
 // @namespace            juejin-enhancer
-// @version              1.0.2
+// @version              1.0.3
 // @description          Enhances Juejin
 // @include              *
 // @name:zh-CN           掘金扩展助手
@@ -1595,16 +1595,24 @@
 	  }).filter(({
 	    plugin
 	  }) => {
-	    return plugin && !plugin.isOffShelf;
+	    return plugin && !(plugin !== null && plugin !== void 0 && plugin.isOffShelf);
 	  });
 	}
 
 	function executePlugin(name, code) {
-	  const plugin = eval(code);
-	  return {
-	    name,
-	    plugin
-	  };
+	  try {
+	    const plugin = eval(code);
+	    return {
+	      name,
+	      plugin
+	    };
+	  } catch (e) {
+	    console.log(name, code);
+	    return {
+	      name,
+	      plugin: null
+	    };
+	  }
 	}
 
 	function launchMarketplace() {
@@ -1628,7 +1636,11 @@
 	      removeAllLocalExtensions();
 	      return "success";
 	    } catch (e) {
-	      return "error";
+	      if (e instanceof Error) {
+	        return "error:" + e.message;
+	      } else {
+	        return "error";
+	      }
 	    }
 	  };
 
@@ -1638,6 +1650,8 @@
 	  }) => {
 	    return installExtension(slug, url, version).then(() => {
 	      return "success";
+	    }).catch(e => {
+	      return "error:" + e.message;
 	    });
 	  };
 

@@ -1,6 +1,6 @@
 {
   "name": "juejin-enhancer",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "scripts": {
     "dev": "rollup --config --environment BUILD:development --watch",
     "build": "tsc && rollup --config",

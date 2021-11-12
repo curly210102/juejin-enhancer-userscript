@@ -132,16 +132,24 @@ function restoreFromStorage() {
       return executePlugin(slug, code);
     })
     .filter(({ plugin }) => {
-      return plugin && !plugin.isOffShelf;
+      return plugin && !plugin?.isOffShelf;
     });
 }
 
 function executePlugin(name: string, code: string) {
-  const plugin = eval(code);
-  return {
-    name,
-    plugin,
-  };
+  try {
+    const plugin = eval(code);
+    return {
+      name,
+      plugin,
+    };
+  } catch (e) {
+    console.log(name, code);
+    return {
+      name,
+      plugin: null,
+    };
+  }
 }
 
 function launchMarketplace() {
@@ -165,14 +173,22 @@ function launchMarketplace() {
       removeAllLocalExtensions();
       return "success";
     } catch (e) {
-      return "error";
+      if (e instanceof Error) {
+        return "error:" + e.message;
+      } else {
+        return "error";
+      }
     }
   };
 
   unsafeWindow.onAddJuejinExtension = (slug, { url, version }) => {
-    return installExtension(slug, url, version).then(() => {
-      return "success";
-    });
+    return installExtension(slug, url, version)
+      .then(() => {
+        return "success";
+      })
+      .catch((e) => {
+        return "error:" + e.message;
+      });
   };
 
   unsafeWindow.onRemoveJuejinExtension = (slug) => {
